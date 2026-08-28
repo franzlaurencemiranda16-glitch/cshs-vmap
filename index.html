@@ -1495,7 +1495,7 @@ function renderSceneStrip(){
     return '<button class="scene-card'+(l.id===STATE.currentSceneLocId?' active':'')+'" data-scene="'+l.id+'">'+
       '<div class="th" style="'+coverStyle(l)+'"></div><div class="lb">'+esc(l.name)+'</div></button>';
   }).join("");
-  $all("[data-scene]", $("#sceneStrip")).forEach(function(b){ b.onclick=function(){ loadScene(this.getAttribute("data-scene")); }; });
+  $all("[data-scene]", $("#sceneStrip")).forEach(function(b){ b.onclick=function(){ var sid=this.getAttribute("data-scene"); loadScene(sid); if(typeof window._spideyOnLoc==="function") window._spideyOnLoc(sid); }; });
 }
 $("#tourMapBtn").addEventListener("click", function(){ goto("map"); });
 $("#tourPrevBtn").addEventListener("click", function(){
@@ -1543,15 +1543,16 @@ $("#tourFullscreenBtn").addEventListener("click", function(){
     editMode = !editMode;
     document.getElementById('tourStage').classList.toggle('tour-edit-active', editMode);
     editAddBtn.textContent = editMode ? 'Click panorama to place...' : '+ Add by clicking panorama';
+    try{ if(editMode && viewerInstance){ viewerInstance.on('mousedown', handlePanoramaClick); } else if(viewerInstance && viewerInstance.off){ viewerInstance.off('mousedown', handlePanoramaClick); } }catch(e){}
   });
   editDoneBtn.addEventListener('click', function(){
     editMode = false;
     document.getElementById('tourStage').classList.remove('tour-edit-active');
     editAddBtn.textContent = '+ Add by clicking panorama';
+    try{ if(viewerInstance && viewerInstance.off) viewerInstance.off('mousedown', handlePanoramaClick); }catch(e){}
   });
-  document.getElementById('tourStage').addEventListener('click', function(e){
+  function handlePanoramaClick(e){
     if(!editMode || !viewerInstance) return;
-    if(e.target.closest('.icon-btn') || e.target.closest('.tour-overlay-top')) return;
     var yaw = viewerInstance.getYaw();
     var pitch = viewerInstance.getPitch();
     var loc = locById(STATE.currentSceneLocId);
@@ -1569,7 +1570,7 @@ $("#tourFullscreenBtn").addEventListener("click", function(){
     saveLocations();
     loadScene(loc.id);
     toast('Hotspot added: ' + targetName);
-  });
+  }
   window._tourEditShowBar = showEditBar;
 })();
 
