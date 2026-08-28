@@ -231,6 +231,19 @@ a{color:inherit;}
 .scene-card .lb{padding:8px 10px;font-size:12px;font-weight:600;}
 .no-scenes{text-align:center;padding:60px 20px;color:var(--ink-500);}
 
+/* Pannellum hotspot styling */
+.pnlm-render-container .pnlm-sprite{width:44px!important;height:44px!important;filter:drop-shadow(0 0 8px rgba(34,163,94,.7));cursor:pointer;transition:transform .2s;}
+.pnlm-render-container .pnlm-sprite:hover{transform:scale(1.25)!important;filter:drop-shadow(0 0 14px rgba(34,163,94,1));}
+.pnlm-render-container .pnlm-hotspot{cursor:pointer!important;}
+.pnlm-render-container .tooltip{background:var(--green-900)!important;color:#fff!important;border-radius:8px!important;padding:6px 14px!important;font-size:13px!important;font-weight:600!important;box-shadow:var(--shadow-md)!important;pointer-events:none!important;}
+.pnlm-render-container .tooltip span{color:#fff!important;}
+
+/* Tour hotspot edit mode */
+.tour-edit-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--green-900);color:#fff;border-radius:var(--radius-md);margin:16px 0;font-size:13px;}
+.tour-edit-bar .btn{padding:8px 16px;font-size:12px;}
+.tour-edit-active .tour-stage{cursor:crosshair;}
+.tour-edit-active .tour-stage::after{content:'Click in the panorama to place a hotspot';position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:8px 18px;border-radius:999px;font-size:12px;font-weight:600;z-index:40;white-space:nowrap;}
+
 /* ---------- About / footer ---------- */
 .about-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;}
 @media(max-width:860px){.about-grid{grid-template-columns:1fr;}}
@@ -534,6 +547,11 @@ table.admintable tr:hover td{background:var(--paper-dim);}
     <div id="sceneStripWrap">
       <p style="font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-500);margin:20px 2px 0;">All scenes</p>
       <div class="scene-strip" id="sceneStrip"></div>
+    </div>
+    <div class="tour-edit-bar" id="tourEditBar" style="display:none;">
+      <span>&#9998; Hotspot Edit Mode</span>
+      <button class="btn btn-green btn-sm" id="tourEditAddBtn">+ Add by clicking panorama</button>
+      <button class="btn btn-ghost btn-sm" id="tourEditDoneBtn" style="color:#fff;border-color:rgba(255,255,255,.3);">Done editing</button>
     </div>
     <div class="no-scenes hidden" id="noScenesMsg">No 360° scenes yet. Add one from the Admin Dashboard → Virtual Tour Management.</div>
   </div>
@@ -1498,6 +1516,68 @@ $("#tourFullscreenBtn").addEventListener("click", function(){
   else { document.exitFullscreen && document.exitFullscreen(); stage.classList.remove("fullscreen-active"); }
 });
 
+/* ---- Tour hotspot edit mode (admin) ---- */
+(function(){
+  var editMode = false;
+  var editBar = document.getElementById('tourEditBar');
+  var editAddBtn = document.getElementById('tourEditAddBtn');
+  var editDoneBtn = document.getElementById('tourEditDoneBtn');
+  function isAdmin(){
+    try { return STATE && STATE.isAdmin; } catch(e){ return false; }
+  }
+  function showEditBar(){
+    if(isAdmin() && scenesFromLocations().length > 0){
+      editBar.style.display = 'flex';
+    } else {
+      editBar.style.display = 'none';
+    }
+  }
+  var origRenderTour = renderTourPage;
+  renderTourPage = function(){
+    origRenderTour();
+    showEditBar();
+    editMode = false;
+    document.getElementById('tourStage').classList.remove('tour-edit-active');
+  };
+  editAddBtn.addEventListener('click', function(){
+    editMode = !editMode;
+    document.getElementById('tourStage').classList.toggle('tour-edit-active', editMode);
+    editAddBtn.textContent = editMode ? 'Click panorama to place...' : '+ Add by clicking panorama';
+    if(editMode && viewerInstance){
+      viewerInstance.on('mousedown', handlePanoramaClick);
+    } else if(viewerInstance){
+      viewerInstance.off('mousedown', handlePanoramaClick);
+    }
+  });
+  editDoneBtn.addEventListener('click', function(){
+    editMode = false;
+    document.getElementById('tourStage').classList.remove('tour-edit-active');
+    editAddBtn.textContent = '+ Add by clicking panorama';
+    if(viewerInstance) viewerInstance.off('mousedown', handlePanoramaClick);
+  });
+  function handlePanoramaClick(e){
+    if(!editMode || !viewerInstance) return;
+    var yaw = viewerInstance.getYaw();
+    var pitch = viewerInstance.getPitch();
+    var loc = locById(STATE.currentSceneLocId);
+    if(!loc) return;
+    var targetScenes = scenesFromLocations().filter(function(s){ return s.id !== loc.id; });
+    if(!targetScenes.length){ toast('Add another scene first'); return; }
+    var targetName = prompt('Hotspot label (e.g. "Go to Library"):');
+    if(!targetName) return;
+    var targetId = prompt('Target location ID:\n' + targetScenes.map(function(s,i){ return (i+1) + '. ' + s.name + ' (' + s.id + ')'; }).join('\n') + '\n\nEnter number or ID:');
+    if(!targetId) return;
+    var targetLoc = targetScenes[parseInt(targetId)-1] || locById(targetId.trim());
+    if(!targetLoc){ toast('Invalid target'); return; }
+    loc.hotspots = loc.hotspots || [];
+    loc.hotspots.push({id:uid('hs'), type:'scene', text:targetName, pitch:Math.round(pitch*10)/10, yaw:Math.round(yaw*10)/10, targetLocationId:targetLoc.id});
+    saveLocations();
+    loadScene(loc.id);
+    toast('Hotspot added: ' + targetName);
+  }
+  window._tourEditShowBar = showEditBar;
+})();
+
 /* ============================================================
    ABOUT PAGE
    ============================================================ */
@@ -1542,6 +1622,7 @@ function renderAdminAll(){
   renderAdminSceneList();
   renderContentForm();
   populateCategorySelect();
+  if(window._tourEditShowBar) window._tourEditShowBar();
 }
 function renderDashCards(){
   var totalPhotos = STATE.locations.filter(function(l){return l.cover;}).length;
