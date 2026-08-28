@@ -169,11 +169,12 @@ a{color:inherit;}
 .map-canvas{position:absolute;top:0;left:0;width:100%;height:100%;transform-origin:0 0;}
 .map-canvas img,.map-canvas svg{width:100%;height:100%;display:block;object-fit:cover;}
 .pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;filter:drop-shadow(0 3px 5px rgba(0,0,0,.35));z-index:5;}
-.pin .dot{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
-.pin .dot span{transform:rotate(45deg);font-size:14px;}
-.pin.editing{cursor:move;}
-.pin-label{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:rgba(9,30,20,.85);color:#fff;font-size:10.5px;padding:3px 8px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:.15s;}
-.pin:hover .pin-label{opacity:1;}
+.pin .dot{width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid #fff;transition:transform .2s,box-shadow .2s;}
+.pin .dot span{transform:rotate(45deg);font-size:15px;}
+.pin:hover .dot{transform:rotate(-45deg) scale(1.15);box-shadow:0 0 0 6px rgba(27,138,79,.25);}
+.pin::after{content:'';position:absolute;top:-8px;left:-8px;right:-8px;bottom:-8px;border-radius:50%;z-index:-1;}
+.pin-label{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--green-900);color:#fff;font-size:11px;font-weight:600;padding:5px 12px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:.2s;box-shadow:var(--shadow-md);}
+.pin:hover .pin-label{opacity:1;transform:translateX(-50%) translateY(-3px);}
 .map-controls{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:20;}
 .map-controls button{width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;}
 .map-controls button:hover{background:var(--paper-dim);}
@@ -183,13 +184,15 @@ a{color:inherit;}
 .you-here .blip{width:8px;height:8px;border-radius:50%;background:#2c9c56;box-shadow:0 0 0 4px rgba(44,156,86,.25);}
 
 /* popup */
-.popup{position:absolute;z-index:50;width:270px;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);overflow:hidden;border:1px solid var(--line);}
+.popup{position:absolute;z-index:50;width:280px;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);overflow:hidden;border:1px solid var(--line);animation:popupIn .2s ease;}
+@keyframes popupIn{from{opacity:0;transform:translateY(8px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 .popup-thumb{height:110px;background-size:cover;background-position:center;}
 .popup-body{padding:14px 16px 16px;}
 .popup-body .cat{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green-700);}
 .popup-body h4{font-family:var(--font-display);margin:4px 0 6px;font-size:16px;}
 .popup-body p{font-size:12.5px;color:var(--ink-500);line-height:1.5;margin:0 0 12px;}
-.popup-actions{display:flex;gap:8px;}
+.popup-actions{display:flex;gap:8px;flex-direction:column;}
+.popup-actions .btn{width:100%;justify-content:center;}
 .popup-close{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.9);border-radius:50%;width:26px;height:26px;border:none;display:flex;align-items:center;justify-content:center;z-index:2;}
 
 /* ---------- Location detail modal ---------- */
@@ -521,6 +524,8 @@ table.admintable tr:hover td{background:var(--paper-dim);}
           <h3 id="tourSceneTitle">—</h3>
         </div>
         <div class="tour-top-btns">
+          <button class="icon-btn" id="tourPrevBtn" title="Previous location" aria-label="Previous location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="icon-btn" id="tourNextBtn" title="Next location" aria-label="Next location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
           <button class="icon-btn" id="tourMapBtn" title="Back to campus map" aria-label="Back to campus map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 4v13M15 7v13"/></svg></button>
           <button class="icon-btn" id="tourFullscreenBtn" title="Fullscreen" aria-label="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg></button>
         </div>
@@ -1237,7 +1242,14 @@ function renderPins(canvasEl, opts){
       pin.addEventListener("click", function(e){
         e.stopPropagation();
         if(opts.editing){ openLocForm(loc.id); }
-        else { showPopup(loc, pin); }
+        else {
+          if(loc.panorama){
+            goto("tour");
+            setTimeout(function(){ loadScene(loc.id); }, 100);
+          } else {
+            openDetail(loc.id);
+          }
+        }
       });
     }
   });
@@ -1284,7 +1296,7 @@ function showPopup(loc, anchorPin){
       '<h4>'+esc(loc.name)+'</h4>'+
       '<p>'+esc(loc.short)+'</p>'+
       '<div class="popup-actions">'+
-        (loc.panorama?'<button class="btn btn-green btn-sm" id="popTourBtn">360° tour</button>':'')+
+        (loc.panorama?'<button class="btn btn-green btn-sm" id="popTourBtn">&#127758; Start Virtual Tour</button>':'')+
         '<button class="btn btn-ghost btn-sm" id="popMoreBtn">More info</button>'+
       '</div>'+
     '</div>';
@@ -1396,16 +1408,31 @@ function scenesFromLocations(){
 }
 function buildPannellumConfig(){
   var scenes = {};
+  var allWithPanorama = scenesFromLocations();
   scenesFromLocations().forEach(function(loc){
+    var userHotspots = (loc.hotspots||[]).map(function(h){
+      var hs = {pitch:h.pitch, yaw:h.yaw, type: h.type==="scene"?"scene":"info", text: h.text};
+      if(h.type==="scene"){ hs.sceneId = h.targetLocationId; }
+      return hs;
+    });
+    var autoHotspots = [];
+    allWithPanorama.forEach(function(other){
+      if(other.id === loc.id) return;
+      var alreadyHas = userHotspots.some(function(h){ return h.sceneId === other.id; });
+      if(alreadyHas) return;
+      var dx = (other.mapX - loc.mapX);
+      var dy = (other.mapY - loc.mapY);
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist < 40){
+        var yaw = Math.atan2(dx, -dy) * (180/Math.PI);
+        autoHotspots.push({pitch:-5, yaw:yaw, type:"scene", text:"Go to " + other.name, sceneId:other.id});
+      }
+    });
     scenes[loc.id] = {
       title: loc.name,
       type: "equirectangular",
       panorama: loc.panorama,
-      hotSpots: (loc.hotspots||[]).map(function(h){
-        var hs = {pitch:h.pitch, yaw:h.yaw, type: h.type==="scene"?"scene":"info", text: h.text};
-        if(h.type==="scene"){ hs.sceneId = h.targetLocationId; }
-        return hs;
-      })
+      hotSpots: userHotspots.concat(autoHotspots)
     };
   });
   return scenes;
@@ -1453,6 +1480,18 @@ function renderSceneStrip(){
   $all("[data-scene]", $("#sceneStrip")).forEach(function(b){ b.onclick=function(){ loadScene(this.getAttribute("data-scene")); }; });
 }
 $("#tourMapBtn").addEventListener("click", function(){ goto("map"); });
+$("#tourPrevBtn").addEventListener("click", function(){
+  var scenes = scenesFromLocations();
+  var idx = scenes.findIndex(function(s){ return s.id === STATE.currentSceneLocId; });
+  if(idx > 0) loadScene(scenes[idx-1].id);
+  else if(scenes.length) loadScene(scenes[scenes.length-1].id);
+});
+$("#tourNextBtn").addEventListener("click", function(){
+  var scenes = scenesFromLocations();
+  var idx = scenes.findIndex(function(s){ return s.id === STATE.currentSceneLocId; });
+  if(idx < scenes.length-1) loadScene(scenes[idx+1].id);
+  else if(scenes.length) loadScene(scenes[0].id);
+});
 $("#tourFullscreenBtn").addEventListener("click", function(){
   var stage = $("#tourStage");
   if(!document.fullscreenElement){ stage.requestFullscreen && stage.requestFullscreen(); stage.classList.add("fullscreen-active"); }
