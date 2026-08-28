@@ -1939,15 +1939,19 @@ init();
     show();
     if(!('speechSynthesis' in window)) return;
     var u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.7;
-    u.pitch = 1.15;
+    u.rate = 0.55;
+    u.pitch = 0.8;
     u.volume = 1;
     function pickVoice(){
       var voices = speechSynthesis.getVoices();
       if(!voices || !voices.length) return null;
-      var bestFemale = ['Microsoft Zira','Samantha','Google UK English Female','Google US English','Moira','Karen','Tessa','Victoria','Alice','Microsoft Hazel','Microsoft Mark'];
-      for(var i=0;i<bestFemale.length;i++){
-        var match = voices.find(function(v){ return v.name && v.name.indexOf(bestFemale[i]) !== -1; });
+      var best = ['Microsoft David Desktop','Microsoft David','Google UK English Male','Google US English','Daniel','James','Alex','Guy','Arthur','Microsoft Mark'];
+      for(var i=0;i<best.length;i++){
+        var match = voices.find(function(v){ return v.name === best[i]; });
+        if(match) return match;
+      }
+      for(var i=0;i<best.length;i++){
+        var match = voices.find(function(v){ return v.name && v.name.indexOf(best[i]) !== -1; });
         if(match) return match;
       }
       var eng = voices.find(function(v){ return v.lang && v.lang.indexOf('en') === 0; });
