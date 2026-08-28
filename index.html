@@ -1939,8 +1939,8 @@ init();
     show();
     if(!('speechSynthesis' in window)) return;
     var u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.55;
-    u.pitch = 0.8;
+    u.rate = 0.85;
+    u.pitch = 1.0;
     u.volume = 1;
     function pickVoice(){
       var voices = speechSynthesis.getVoices();
