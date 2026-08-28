@@ -720,8 +720,22 @@ table.admintable tr:hover td{background:var(--paper-dim);}
           <div class="form-grid">
             <div class="field full"><label>Footer tagline</label><input id="cfFooterTag"></div>
             <div class="field"><label>Contact email</label><input id="cfEmail" type="email"></div>
-            <div class="field"><label>Contact phone</label><input id="cfPhone"></div>
+            <div class="field"><label>Contact phone</label><input id="cfPhone" type="tel"></div>
           </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Spider-Man Narrator</h3></div>
+          <p class="field-hint" style="margin-bottom:12px;">Edit what Spider-Man says for each location and the default greeting.</p>
+          <div class="field full"><label>Default greeting (when avatar is clicked)</label><textarea id="cfSpideyDefault" rows="3"></textarea></div>
+          <div class="field full" style="margin-top:10px;"><label>Main Gate</label><textarea id="cfSpideyGate" rows="3"></textarea></div>
+          <div class="field full" style="margin-top:10px;"><label>Principal's Office</label><textarea id="cfSpideyPrincipal" rows="3"></textarea></div>
+          <div class="field full" style="margin-top:10px;"><label>ICT Laboratory</label><textarea id="cfSpideyICT" rows="3"></textarea></div>
+          <div class="field full" style="margin-top:10px;"><label>Library</label><textarea id="cfSpideyLibrary" rows="3"></textarea></div>
+          <div class="field full" style="margin-top:10px;"><label>Canteen</label><textarea id="cfSpideyCanteen" rows="3"></textarea></div>
+          <div class="field full" style="margin-top:10px;"><label>Covered Court</label><textarea id="cfSpideyCourt" rows="3"></textarea></div>
+          <div class="field full" style="margin-top:10px;"><label>School Clinic</label><textarea id="cfSpideyClinic" rows="3"></textarea></div>
+          <div class="field full" style="margin-top:10px;"><label>Guidance Office</label><textarea id="cfSpideyGuidance" rows="3"></textarea></div>
+        </div>
         </div>
         <button type="submit" class="btn btn-green">Save changes</button>
       </form>
@@ -1761,6 +1775,16 @@ function renderContentForm(){
   $("#cfFooterTag").value = c.footerTagline;
   $("#cfEmail").value = c.email;
   $("#cfPhone").value = c.phone;
+  var sp = c.spidey || {};
+  $("#cfSpideyDefault").value = sp.default || '';
+  $("#cfSpideyGate").value = sp["loc-gate"] || '';
+  $("#cfSpideyPrincipal").value = sp["loc-principal"] || '';
+  $("#cfSpideyICT").value = sp["loc-ict"] || '';
+  $("#cfSpideyLibrary").value = sp["loc-library"] || '';
+  $("#cfSpideyCanteen").value = sp["loc-canteen"] || '';
+  $("#cfSpideyCourt").value = sp["loc-court"] || '';
+  $("#cfSpideyClinic").value = sp["loc-clinic"] || '';
+  $("#cfSpideyGuidance").value = sp["loc-guidance"] || '';
 }
 $("#contentForm").addEventListener("submit", function(e){
   e.preventDefault();
@@ -1774,10 +1798,22 @@ $("#contentForm").addEventListener("submit", function(e){
     about2: $("#cfAbout2").value.trim(),
     footerTagline: $("#cfFooterTag").value.trim(),
     email: $("#cfEmail").value.trim(),
-    phone: $("#cfPhone").value.trim()
+    phone: $("#cfPhone").value.trim(),
+    spidey: {
+      "default": $("#cfSpideyDefault").value.trim(),
+      "loc-gate": $("#cfSpideyGate").value.trim(),
+      "loc-principal": $("#cfSpideyPrincipal").value.trim(),
+      "loc-ict": $("#cfSpideyICT").value.trim(),
+      "loc-library": $("#cfSpideyLibrary").value.trim(),
+      "loc-canteen": $("#cfSpideyCanteen").value.trim(),
+      "loc-court": $("#cfSpideyCourt").value.trim(),
+      "loc-clinic": $("#cfSpideyClinic").value.trim(),
+      "loc-guidance": $("#cfSpideyGuidance").value.trim()
+    }
   };
   saveContent();
   renderContentToDOM();
+  window._updateSpideyDescs && window._updateSpideyDescs(STATE.content.spidey);
   toast("Site content saved");
 });
 
@@ -1875,17 +1911,28 @@ init();
    SPIDERMAN NARRATOR — voice guide for the campus
    ============================================================ */
 (function(){
-  var DESCS = {
+  var DEFAULT_DESCS = {
     "loc-gate": "Thwip! Hey there, friendly neighborhood student! I'm Spiderman, and this — this is the Main Gate of Cabiao Senior High School! Every hero needs a starting point, and this is where all the great adventures begin. Swing on in, the campus is waiting!",
     "loc-principal": "Whoa, careful — this is the Principal's Office! This is where the real power moves happen. The principal and the staff are like the Avengers of this school — keeping everything in order so you can focus on being awesome. Respect the HQ!",
-    "loc-ict": "Spider-sense tingling — this is the ICT Laboratory! This is where the real web-slinging happens... the digital kind! Students learn coding, programming, and all sorts of tech wizardry in here. If you love computers, this is your蛛网 — your web!",
+    "loc-ict": "Spider-sense tingling — this is the ICT Laboratory! This is where the real web-slinging happens... the digital kind! Students learn coding, programming, and all sorts of tech wizardry in here.",
     "loc-library": "Shh — even Spiderman needs to study! This is the Library, a quiet zone packed with books, references, and knowledge. Think of it as the Forbidden Archive, but way cooler. Grab a book and level up your brainpower!",
-    "loc-canteen": "My spider-sense is picking up... food! This is the Campus Canteen — the refueling station for every hero-in-training. Whether you need a quick snack or a full meal, this is the spot. Even crime-fighters need their energy!",
-    "loc-court": "This is the Covered Court — the arena where champions are made! Sports events, assemblies, intramurals, school celebrations — this is where the energy is electric! I'd totally play basketball here if I could take off the mask.",
-    "loc-clinic": "If you ever get hurt — don't worry, Spiderman's got your back! This is the School Clinic, staffed with real-life heroes who patch you up and keep you healthy. From scraped knees to check-ups, they've got the healing touch!",
-    "loc-guidance": "Hey, even Spiderman needs someone to talk to sometimes. This is the Guidance Office — a safe zone where you can get counseling, advice, and support. No judgment, just help. The guidance counselors are the real MVPs of student life!"
+    "loc-canteen": "My spider-sense is picking up... food! This is the Campus Canteen — the refueling station for every hero-in-training. Whether you need a quick snack or a full meal, this is the spot!",
+    "loc-court": "This is the Covered Court — the arena where champions are made! Sports events, assemblies, intramurals, school celebrations — this is where the energy is electric!",
+    "loc-clinic": "If you ever get hurt — don't worry, Spiderman's got your back! This is the School Clinic, staffed with real-life heroes who patch you up and keep you healthy!",
+    "loc-guidance": "Hey, even Spiderman needs someone to talk to sometimes. This is the Guidance Office — a safe zone where you can get counseling, advice, and support. No judgment, just help!"
   };
-  var DEFAULT_DESC = "Thwip! What's up, friendly neighborhood student! I'm Spiderman, your virtual tour guide here at Cabiao Senior High School! Tap any location on the map or click a card and I'll tell you all about it. Let's swing through this campus together!";
+  var DEFAULT_GREETING = "Thwip! What's up, friendly neighborhood student! I'm Spiderman, your virtual tour guide here at Cabiao Senior High School! Tap any location on the map or click a card and I'll tell you all about it. Let's swing through this campus together!";
+  var DESCS = {};
+  function loadDescs(){
+    var sp = (STATE && STATE.content && STATE.content.spidey) || {};
+    DESCS = {};
+    for(var k in DEFAULT_DESCS){
+      DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
+    }
+  }
+  loadDescs();
+  window._updateSpideyDescs = function(){ loadDescs(); };
+  var DEFAULT_DESC = DESCS["default"] || DEFAULT_GREETING;
   var spideyEl = null, bubbleEl = null, textEl = null, avatarEl = null;
   var spokenOnce = false;
 
@@ -1939,13 +1986,14 @@ init();
     show();
     if(!('speechSynthesis' in window)) return;
     var u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.95;
-    u.pitch = 1.05;
+    u.rate = 0.9;
+    u.pitch = 1.0;
     u.volume = 1;
+    speechSynthesis.cancel();
     function pickVoice(){
       var voices = speechSynthesis.getVoices();
       if(!voices || !voices.length) return null;
-      var best = ['Microsoft David Desktop','Microsoft David','Google UK English Male','Google US English','Daniel','James','Alex','Guy','Arthur','Microsoft Mark'];
+      var best = ['Microsoft David Desktop','Microsoft David','Google US English','Google UK English Male','Daniel','James','Alex','Guy','Microsoft Mark'];
       for(var i=0;i<best.length;i++){
         var match = voices.find(function(v){ return v.name === best[i]; });
         if(match) return match;
@@ -1954,8 +2002,8 @@ init();
         var match = voices.find(function(v){ return v.name && v.name.indexOf(best[i]) !== -1; });
         if(match) return match;
       }
-      var eng = voices.find(function(v){ return v.lang && v.lang.indexOf('en') === 0; });
-      return eng || voices[0];
+      var eng = voices.filter(function(v){ return v.lang && v.lang.indexOf('en') === 0; });
+      return (eng.length ? eng[0] : null) || voices[0];
     }
     var pick = pickVoice();
     if(pick) u.voice = pick;
