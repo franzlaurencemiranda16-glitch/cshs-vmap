@@ -334,8 +334,11 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 .page{display:none;}
 .page.active{display:block;}
 
-/* Logo background removal */
-.brand img, .footer-brand img, .admin-login-card img {
+/* Logo styling - show natural colors */
+.footer-brand img, .admin-login-card img {
+  mix-blend-mode: multiply;
+}
+.footer-credits img {
   mix-blend-mode: multiply;
 }
 </style>
@@ -566,6 +569,10 @@ table.admintable tr:hover td{background:var(--paper-dim);}
         </div>
         <button type="submit" class="btn btn-green" style="width:100%;justify-content:center;">Log in</button>
       </form>
+      <div style="margin-top:18px;display:flex;gap:10px;">
+        <button onclick="document.querySelector('[data-nav=tour]').click()" class="btn btn-green" style="flex:1;justify-content:center;font-size:13px;">Start Virtual Tour</button>
+        <button onclick="document.querySelector('[data-nav=map]').click()" class="btn btn-green" style="flex:1;justify-content:center;font-size:13px;background:var(--green-700);">View Campus Map</button>
+      </div>
 
     </div>
   </div>
@@ -1922,13 +1929,13 @@ init();
     show();
     if(!('speechSynthesis' in window)) return;
     var u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.3;
-    u.pitch = 1.8;
+    u.rate = 0.92;
+    u.pitch = 1.1;
     u.volume = 1;
     function pickVoice(){
       var voices = speechSynthesis.getVoices();
       if(!voices || !voices.length) return null;
-      var names = ['Alex','Google US English','Google UK English Female','Samantha','Karen','Google'];
+      var names = ['Microsoft David','Microsoft Zira','Google US English','Google UK English Male','Alex','Samantha','Daniel','James','Karen','Google'];
       for(var i=0;i<names.length;i++){
         var match = voices.find(function(v){ return v.name && v.name.indexOf(names[i]) !== -1; });
         if(match) return match;
