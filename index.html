@@ -1543,20 +1543,15 @@ $("#tourFullscreenBtn").addEventListener("click", function(){
     editMode = !editMode;
     document.getElementById('tourStage').classList.toggle('tour-edit-active', editMode);
     editAddBtn.textContent = editMode ? 'Click panorama to place...' : '+ Add by clicking panorama';
-    if(editMode && viewerInstance){
-      viewerInstance.on('mousedown', handlePanoramaClick);
-    } else if(viewerInstance){
-      viewerInstance.off('mousedown', handlePanoramaClick);
-    }
   });
   editDoneBtn.addEventListener('click', function(){
     editMode = false;
     document.getElementById('tourStage').classList.remove('tour-edit-active');
     editAddBtn.textContent = '+ Add by clicking panorama';
-    if(viewerInstance) viewerInstance.off('mousedown', handlePanoramaClick);
   });
-  function handlePanoramaClick(e){
+  document.getElementById('tourStage').addEventListener('click', function(e){
     if(!editMode || !viewerInstance) return;
+    if(e.target.closest('.icon-btn') || e.target.closest('.tour-overlay-top')) return;
     var yaw = viewerInstance.getYaw();
     var pitch = viewerInstance.getPitch();
     var loc = locById(STATE.currentSceneLocId);
@@ -1574,7 +1569,7 @@ $("#tourFullscreenBtn").addEventListener("click", function(){
     saveLocations();
     loadScene(loc.id);
     toast('Hotspot added: ' + targetName);
-  }
+  });
   window._tourEditShowBar = showEditBar;
 })();
 
