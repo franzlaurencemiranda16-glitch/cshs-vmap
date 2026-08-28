@@ -569,9 +569,12 @@ table.admintable tr:hover td{background:var(--paper-dim);}
         </div>
         <button type="submit" class="btn btn-green" style="width:100%;justify-content:center;">Log in</button>
       </form>
-      <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">
-        <button onclick="goto('tour')" class="btn btn-green" style="width:100%;justify-content:center;font-size:14px;">&#127758; Start Virtual Tour</button>
-        <button onclick="goto('map')" class="btn btn-green" style="width:100%;justify-content:center;font-size:14px;background:var(--green-700);">&#128205; View Campus Map</button>
+      <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--line);">
+        <p style="font-size:12px;color:var(--ink-500);text-align:center;margin-bottom:12px;">Or explore without logging in:</p>
+        <div style="display:flex;gap:10px;">
+          <button onclick="window.goto('tour')" class="btn btn-green" style="flex:1;justify-content:center;font-size:13px;padding:12px 8px;">&#127758; Start Virtual Tour</button>
+          <button onclick="window.goto('map')" class="btn btn-green" style="flex:1;justify-content:center;font-size:13px;padding:12px 8px;background:var(--green-700);">&#128205; View Campus Map</button>
+        </div>
       </div>
 
     </div>
@@ -1040,6 +1043,7 @@ function goto(name){
   if(name==="about") renderAbout();
   if(name==="admin-dashboard") renderAdminAll();
 }
+window.goto = goto;
 document.addEventListener("click", function(e){
   var btn = e.target.closest("[data-nav]");
   if(btn){ e.preventDefault(); goto(btn.getAttribute("data-nav")); }
@@ -1929,21 +1933,19 @@ init();
     show();
     if(!('speechSynthesis' in window)) return;
     var u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.0;
-    u.pitch = 1.4;
+    u.rate = 0.8;
+    u.pitch = 1.2;
     u.volume = 1;
     function pickVoice(){
       var voices = speechSynthesis.getVoices();
       if(!voices || !voices.length) return null;
-      var names = ['Microsoft Zira','Google UK English Female','Samantha','Karen','Google','Microsoft Hazel','Victoria','Alice','Moira','Tessa'];
-      for(var i=0;i<names.length;i++){
-        var match = voices.find(function(v){ return v.name && v.name.indexOf(names[i]) !== -1; });
+      var femaleNames = ['Microsoft Zira','Samantha','Google UK English Female','Google US English','Karen','Moira','Tessa','Victoria','Alice','Microsoft Hazel'];
+      for(var i=0;i<femaleNames.length;i++){
+        var match = voices.find(function(v){ return v.name && v.name.indexOf(femaleNames[i]) !== -1; });
         if(match) return match;
       }
-      var eng = voices.find(function(v){ return v.lang && v.lang.indexOf('en') === 0 && v.name && (v.name.toLowerCase().indexOf('female') !== -1 || v.name.toLowerCase().indexOf('woman') !== -1 || v.name.toLowerCase().indexOf('zira') !== -1 || v.name.toLowerCase().indexOf('samantha') !== -1); });
-      if(eng) return eng;
-      var engAny = voices.find(function(v){ return v.lang && v.lang.indexOf('en') === 0; });
-      return engAny || voices[0];
+      var engFemale = voices.find(function(v){ return v.lang && v.lang.indexOf('en') === 0; });
+      return engFemale || voices[0];
     }
     var pick = pickVoice();
     if(pick) u.voice = pick;
